@@ -22,6 +22,7 @@ app.get("/", (req, res) => {
 app.use("/register", require("./route/register"));
 app.use("/movie_category", require("./route/movie_category"));
 app.use("/movie", require("./route/movie"));
+app.use("/theater", require("./route/theater"));
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
