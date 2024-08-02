@@ -23,6 +23,8 @@ app.use("/register", require("./route/register"));
 app.use("/movie_category", require("./route/movie_category"));
 app.use("/movie", require("./route/movie"));
 app.use("/theater", require("./route/theater"));
+app.use("/showtime", require("./route/show_time"));
+app.use("/seat", require("./route/seat"));
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
