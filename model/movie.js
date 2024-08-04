@@ -34,7 +34,9 @@ class MOVIE {
     let query = `SELECT movies.*, movie_category.categoryname
                      FROM movies
                      JOIN movie_category ON movies.moviecategoryid = movie_category.categoryid
-                     WHERE movies.releasedate <= ?`;
+                     WHERE movies.releasedate <= ?
+                     ORDER BY movies.releasedate ASC
+                     `;
     return db.execute(query, [currentDate]);
   }
 

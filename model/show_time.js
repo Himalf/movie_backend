@@ -19,17 +19,32 @@ class SHOWTIME {
   }
 
   static getShowtimesByMovieId(movie_id) {
-    let query = `SELECT * FROM showtimes WHERE movie_id = ?`;
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      WHERE showtimes.movie_id = ?`;
     return db.execute(query, [movie_id]);
   }
 
   static getShowtimesByTheaterId(theater_id) {
-    let query = `SELECT * FROM showtimes WHERE theater_id = ?`;
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      WHERE showtimes.theater_id = ?`;
     return db.execute(query, [theater_id]);
   }
 
   static getShowtimeById(showtimeid) {
-    let query = `SELECT * FROM showtimes WHERE showtimeid = ?`;
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      WHERE showtimes.showtimeid = ?`;
     return db.execute(query, [showtimeid]);
   }
 
@@ -50,8 +65,25 @@ class SHOWTIME {
   }
 
   static getAllShowtimes() {
-    let query = `SELECT * FROM showtimes ORDER BY show_date DESC, show_time DESC`;
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      ORDER BY showtimes.show_date DESC, showtimes.show_time DESC`;
     return db.execute(query);
+  }
+
+  static getShowtimesByTheaterMovieAndDate(theater_id, movie_id, show_date) {
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      WHERE showtimes.theater_id = ?
+        AND showtimes.movie_id = ?
+        AND showtimes.show_date = ?`;
+    return db.execute(query, [theater_id, movie_id, show_date]);
   }
 }
 

@@ -19,45 +19,67 @@ class SEAT {
   }
 
   static getSeatsByShowtime(showtime_id) {
-    let query = `SELECT * FROM seats WHERE showtime_id = ?`;
+    let query = `
+      SELECT seats.*, showtimes.*, theaters.*, movies.*
+      FROM seats
+      JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      WHERE showtimes.showtimeid = ?`;
     return db.execute(query, [showtime_id]);
   }
 
   static getSeatsByMovieAndShowtime(movie_id, showtime_id) {
     let query = `
-      SELECT seats.*
+      SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE showtimes.movie_id = ? AND showtimes.showtimeid = ?`;
     return db.execute(query, [movie_id, showtime_id]);
   }
 
   static getSeatsByDateAndTime(show_date, show_time) {
     let query = `
-      SELECT seats.*
+      SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE showtimes.show_date = ? AND showtimes.show_time = ?`;
     return db.execute(query, [show_date, show_time]);
   }
 
-  static updateSeatStatus(seatid, status) {
+  static updateSeatStatus(seat_id, status) {
     let query = `UPDATE seats SET status = ? WHERE seatid = ?`;
-    return db.execute(query, [status, seatid]);
+    return db.execute(query, [status, seat_id]);
   }
 
-  static deleteSeat(seatid) {
+  static deleteSeat(seat_id) {
     let query = `DELETE FROM seats WHERE seatid = ?`;
-    return db.execute(query, [seatid]);
+    return db.execute(query, [seat_id]);
   }
 
-  static getSeatById(seatid) {
-    let query = `SELECT * FROM seats WHERE seatid = ?`;
-    return db.execute(query, [seatid]);
+  static getSeatById(seat_id) {
+    let query = `
+      SELECT seats.*, showtimes.*, theaters.*, movies.*
+      FROM seats
+      JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      WHERE seats.seatid = ?`;
+    return db.execute(query, [seat_id]);
   }
 
   static getAllSeats() {
-    let query = `SELECT * FROM seats ORDER BY seat_number ASC`;
+    let query = `
+      SELECT seats.*, showtimes.*, theaters.*, movies.*
+      FROM seats
+      JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      ORDER BY seats.seat_number ASC`;
     return db.execute(query);
   }
 }
