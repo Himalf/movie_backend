@@ -38,6 +38,16 @@ class SHOWTIME {
     return db.execute(query, [theater_id]);
   }
 
+  static getShowtimesByMovieAndTheater(movie_id, theater_id) {
+    let query = `
+      SELECT showtimes.*, movies.*, theaters.*
+      FROM showtimes
+      JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
+      WHERE showtimes.movie_id = ? AND showtimes.theater_id = ?`;
+    return db.execute(query, [movie_id, theater_id]);
+  }
+
   static getShowtimeById(showtimeid) {
     let query = `
       SELECT showtimes.*, movies.*, theaters.*
