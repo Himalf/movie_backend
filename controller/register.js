@@ -152,6 +152,7 @@ exports.verifyToken = (req, res, next) => {
   if (!token) {
     return res.status(401).json({ error: "Access denied, no token provided" });
   }
+  console.log(token, "fndd");
 
   try {
     const verified = jwt.verify(token, secretKey);
