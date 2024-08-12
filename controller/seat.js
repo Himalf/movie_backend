@@ -122,6 +122,7 @@ exports.getAllSeatsController = async (req, res) => {
     return res.status(200).json(seats[0]);
   } catch (error) {
     console.log(error);
+    console.log(seats, "fdsf");
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
