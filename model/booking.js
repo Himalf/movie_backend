@@ -1,10 +1,10 @@
 const db = require("../config/db");
 
 class BOOKING {
-  constructor(user_id, showtime_id, seat_id) {
+  constructor(user_id, showtime_id, seat_ids) {
     this.user_id = user_id;
     this.showtime_id = showtime_id;
-    this.seat_id = seat_id;
+    this.seat_ids = seat_ids; // Accept an array of seat IDs
   }
 
   async create() {
@@ -12,17 +12,15 @@ class BOOKING {
     try {
       await connection.beginTransaction();
 
-      // Insert booking
+      // Insert bookings for each seat
       let sql = `INSERT INTO bookings (user_id, showtime_id, seat_id) VALUES (?, ?, ?)`;
-      await connection.query(sql, [
-        this.user_id,
-        this.showtime_id,
-        this.seat_id,
-      ]);
+      for (const seat_id of this.seat_ids) {
+        await connection.query(sql, [this.user_id, this.showtime_id, seat_id]);
 
-      // Update seat status
-      sql = `UPDATE seats SET status = 'Booked' WHERE seatid = ?`;
-      await connection.query(sql, [this.seat_id]);
+        // Update seat status for each seat
+        let updateSql = `UPDATE seats SET status = 'Booked' WHERE seatid = ?`;
+        await connection.query(updateSql, [seat_id]);
+      }
 
       await connection.commit();
     } catch (error) {
@@ -35,7 +33,9 @@ class BOOKING {
 
   async updateSeatStatus(status) {
     let query = `UPDATE seats SET status = ? WHERE seatid = ?`;
-    return db.execute(query, [status, this.seat_id]);
+    for (const seat_id of this.seat_ids) {
+      await db.execute(query, [status, seat_id]);
+    }
   }
 
   static getBookingById(booking_id) {
