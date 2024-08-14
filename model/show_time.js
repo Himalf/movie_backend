@@ -95,6 +95,18 @@ class SHOWTIME {
         AND showtimes.show_date = ?`;
     return db.execute(query, [theater_id, movie_id, show_date]);
   }
+  static deleteExpiredShowtimes() {
+    const currentDateTime = new Date();
+    const query = `
+      DELETE FROM showtimes
+      WHERE show_date < ?
+      OR (show_date = ? AND show_time < ?)`;
+    return db.execute(query, [
+      currentDateTime.toISOString().split("T")[0],
+      currentDateTime.toISOString().split("T")[0],
+      currentDateTime.toTimeString().split(" ")[0],
+    ]);
+  }
 }
 
 module.exports = SHOWTIME;
