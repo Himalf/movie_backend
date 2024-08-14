@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const SEAT = require("./model/seat");
 const app = express();
 const port = process.env.PORT_NEW;
-
+const cron = require("node-cron");
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
