@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
+const SEAT = require("./model/seat");
 const app = express();
 const port = process.env.PORT_NEW;
 
@@ -29,4 +29,7 @@ app.use("/booking", require("./route/booking"));
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
+});
+cron.schedule("0 0 * * *", async () => {
+  await deleteSeatsBeforeCurrentTime();
 });

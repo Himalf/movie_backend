@@ -61,6 +61,16 @@ class SEAT {
     return db.execute(query, [seat_id]);
   }
 
+  static deleteSeatsBeforeCurrentTime() {
+    let query = `
+      DELETE seats
+      FROM seats
+      JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
+      WHERE showtimes.show_date < CURDATE() OR
+            (showtimes.show_date = CURDATE() AND showtimes.show_time < CURTIME())`;
+    return db.execute(query);
+  }
+
   static getSeatById(seat_id) {
     let query = `
       SELECT seats.*, showtimes.*, theaters.*, movies.*

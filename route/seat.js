@@ -16,7 +16,7 @@ const router = express.Router();
 router.post("/", createSeatController);
 
 // Get seats by showtime_id
-router.get("/showtime/:showtime_id", getSeatsByShowtimeController);
+router.get("/:showtime_id", getSeatsByShowtimeController);
 
 // Get seats by movie_id and showtime_id
 router.get(
@@ -27,14 +27,14 @@ router.get(
 // Get seats by date and time
 router.get("/date/:show_date/time/:show_time", getSeatsByDateAndTimeController);
 
-// Update seat status
-router.patch("/:seatid/status", updateSeatStatusController);
+// Update seat status by seat_id
+router.put("/:seatid", updateSeatStatusController);
 
-// Delete seat
+// Delete seat by seat_id
 router.delete("/:seatid", deleteSeatController);
 
-// Get seat by seatid
-router.get("/:seatid", getSeatByIdController);
+// Get seat by seat_id
+router.get("/seat/:seatid", getSeatByIdController);
 
 // Get all seats
 router.get("/", getAllSeatsController);

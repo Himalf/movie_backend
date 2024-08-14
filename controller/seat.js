@@ -122,7 +122,16 @@ exports.getAllSeatsController = async (req, res) => {
     return res.status(200).json(seats[0]);
   } catch (error) {
     console.log(error);
-    console.log(seats, "fdsf");
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Automatically delete seats where the showtime is before the current date and time
+exports.deleteSeatsBeforeCurrentTime = async () => {
+  try {
+    await SEAT.deleteSeatsBeforeCurrentTime();
+    console.log("Expired seats deleted successfully.");
+  } catch (error) {
+    console.log("Error deleting expired seats:", error);
   }
 };
