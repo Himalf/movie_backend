@@ -126,14 +126,24 @@ exports.getShowtimesByTheaterMovieAndDateController = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-exports.deleteExpiredShowtimesController = async (req, res) => {
+// Separate function to delete expired showtimes
+const deleteExpiredShowtimes = async () => {
   try {
     await SHOWTIME.deleteExpiredShowtimes();
-    return res
-      .status(200)
-      .json({ msg: "Expired showtimes deleted successfully" });
+    console.log("Expired showtimes deleted successfully");
+  } catch (error) {
+    console.error("Error deleting expired showtimes:", error);
+    throw error; // Re-throw the error for handling in the cron job or controller
+  }
+};
+
+exports.deleteExpiredShowtimesController = async (req, res) => {
+  try {
+    await deleteExpiredShowtimes();
+    return res.status(200).json({ msg: "Expired showtimes deleted successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+

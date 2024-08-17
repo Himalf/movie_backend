@@ -1,21 +1,15 @@
 const db = require("../config/db");
 
 class SEAT {
-  constructor(seat_number, status, showtime_id, theater_id) {
+  constructor(seat_number, status, showtime_id) {
     this.seat_number = seat_number;
     this.status = status;
     this.showtime_id = showtime_id;
-    this.theater_id = theater_id;
   }
 
   create() {
-    let sql = `INSERT INTO seats (seat_number, status, showtime_id, theater_id) VALUES (?, ?, ?, ?)`;
-    return db.execute(sql, [
-      this.seat_number,
-      this.status,
-      this.showtime_id,
-      this.theater_id,
-    ]);
+    let sql = `INSERT INTO seats (seat_number, status, showtime_id) VALUES (?, ?, ?)`;
+    return db.execute(sql, [this.seat_number, this.status, this.showtime_id]);
   }
 
   static getSeatsByShowtime(showtime_id) {
@@ -23,7 +17,7 @@ class SEAT {
       SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
-      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE showtimes.showtimeid = ?`;
     return db.execute(query, [showtime_id]);
@@ -34,7 +28,7 @@ class SEAT {
       SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
-      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE showtimes.movie_id = ? AND showtimes.showtimeid = ?`;
     return db.execute(query, [movie_id, showtime_id]);
@@ -45,7 +39,7 @@ class SEAT {
       SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
-      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE showtimes.show_date = ? AND showtimes.show_time = ?`;
     return db.execute(query, [show_date, show_time]);
@@ -76,7 +70,7 @@ class SEAT {
       SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
-      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       JOIN movies ON showtimes.movie_id = movies.movieid
       WHERE seats.seatid = ?`;
     return db.execute(query, [seat_id]);
@@ -87,7 +81,7 @@ class SEAT {
       SELECT seats.*, showtimes.*, theaters.*, movies.*
       FROM seats
       JOIN showtimes ON seats.showtime_id = showtimes.showtimeid
-      JOIN theaters ON seats.theater_id = theaters.theaterid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       JOIN movies ON showtimes.movie_id = movies.movieid
       ORDER BY seats.seat_number ASC`;
     return db.execute(query);

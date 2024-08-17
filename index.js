@@ -2,12 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const helmet = require("helmet");
-const morgan = require("morgan");
 const cron = require("node-cron");
 const SEAT = require("./model/seat");
 const { deleteSeatsBeforeCurrentTime } = require("./controller/seat");
-const { deleteExpiredShowtimes } = require("./controller/show_time");
+const { deleteExpiredShowtimesController } = require("./controller/show_time");
 
 const app = express();
 const port = process.env.PORT_NEW || 3000; // Default port for development
@@ -16,8 +14,8 @@ const port = process.env.PORT_NEW || 3000; // Default port for development
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({ origin: "*" }));
-app.use(helmet()); // Security enhancements
-app.use(morgan("combined")); // Logging
+// app.use(helmet()); // Security enhancements
+// app.use(morgan("combined")); // Logging
 app.use(express.static("public"));
 
 // Routes
@@ -45,11 +43,11 @@ app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
 });
 
-// Cron jobs
-cron.schedule("0 0 * * *", async () => {
+// Cron jobs - runs every 30 seconds
+cron.schedule("0 */2 * * *", async () => {
   try {
     await deleteSeatsBeforeCurrentTime();
-    await deleteExpiredShowtimes();
+    await deleteExpiredShowtimesController();
     console.log("Cron job executed successfully.");
   } catch (error) {
     console.error("Error executing cron job:", error);

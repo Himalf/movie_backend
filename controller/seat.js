@@ -2,20 +2,20 @@ const SEAT = require("../model/seat");
 
 exports.createSeatController = async (req, res) => {
   try {
-    const { status, showtime_id, theater_id } = req.body;
+    const { status, showtime_id } = req.body;
 
-    if (!status || !showtime_id || !theater_id) {
+    if (!status || !showtime_id) {
       return res
         .status(400)
-        .json({ error: "Status, showtime_id, and theater_id are required" });
+        .json({ error: "Status, showtime_id,  are required" });
     }
 
     // Generate seat numbers based on theater_id
-    const seatNumbers = generateSeatNumbers(theater_id);
+    const seatNumbers = generateSeatNumbers(showtime_id);
 
     // Insert each seat into the database
     const insertPromises = seatNumbers.map((seat_number) =>
-      new SEAT(seat_number, status, showtime_id, theater_id).create()
+      new SEAT(seat_number, status, showtime_id).create()
     );
 
     await Promise.all(insertPromises);
@@ -28,7 +28,7 @@ exports.createSeatController = async (req, res) => {
 };
 
 // Helper function to generate seat numbers based on theater_id
-function generateSeatNumbers(theater_id) {
+function generateSeatNumbers(showtime_id) {
   // Example: Generate seat numbers in a grid format
   const rows = 10; // Number of rows
   const seatsPerRow = 10; // Number of seats per row

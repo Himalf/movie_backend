@@ -18,6 +18,10 @@ class REGISTER {
       this.dateofbirth,
     ]);
   }
+  static findAll() {
+    const sql = `select * from register_user`;
+    return db.execute(sql);
+  }
 
   static findByEmail(email) {
     const sql = "SELECT * FROM register_user WHERE email=?";
