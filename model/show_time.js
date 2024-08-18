@@ -1,5 +1,5 @@
 const db = require("../config/db");
-
+const SEAT = require("../model/seat");
 class SHOWTIME {
   constructor(movie_id, theater_id, show_date, show_time) {
     this.movie_id = movie_id;
@@ -8,14 +8,40 @@ class SHOWTIME {
     this.show_time = show_time;
   }
 
-  create() {
+  async create() {
     let sql = `INSERT INTO showtimes (movie_id, theater_id, show_date, show_time) VALUES (?, ?, ?, ?)`;
-    return db.execute(sql, [
+
+    const [result] = await db.execute(sql, [
       this.movie_id,
       this.theater_id,
       this.show_date,
       this.show_time,
     ]);
+
+    const showtime_id = result.insertId;
+
+    // Automatically generate and insert seats for the new showtime
+    await this.createSeatsForShowtime(showtime_id);
+
+    return result;
+  }
+
+  async createSeatsForShowtime(showtime_id) {
+    const rows = 10; // Number of rows
+    const seatsPerRow = 10; // Number of seats per row
+    const seatNumbers = [];
+
+    for (let row = 1; row <= rows; row++) {
+      for (let seat = 1; seat <= seatsPerRow; seat++) {
+        seatNumbers.push(`${String.fromCharCode(64 + row)}${seat}`);
+      }
+    }
+
+    const seatCreationPromises = seatNumbers.map((seat_number) =>
+      new SEAT(seat_number, "available", showtime_id).create()
+    );
+
+    await Promise.all(seatCreationPromises);
   }
 
   static getShowtimesByMovieId(movie_id) {

@@ -12,14 +12,13 @@ exports.createShowtimeController = async (req, res) => {
     const createRecord = await showtimeModel.create();
     return res.status(200).json({
       createRecord,
-      msg: "Showtime created successfully",
+      msg: "Showtime and seats created successfully",
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 exports.getShowtimesByMovieIdController = async (req, res) => {
   try {
     const { movie_id } = req.params;
@@ -140,10 +139,11 @@ const deleteExpiredShowtimes = async () => {
 exports.deleteExpiredShowtimesController = async (req, res) => {
   try {
     await deleteExpiredShowtimes();
-    return res.status(200).json({ msg: "Expired showtimes deleted successfully" });
+    return res
+      .status(200)
+      .json({ msg: "Expired showtimes deleted successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
