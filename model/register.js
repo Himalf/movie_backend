@@ -1,18 +1,20 @@
 const db = require("../config/db");
 
 class REGISTER {
-  constructor(userid, fullname, email, password, dateofbirth) {
+  constructor(userid, fullname, phoneno, email, password, dateofbirth) {
     this.userid = userid || null;
     this.fullname = fullname || null;
+    this.phoneno = phoneno || null;
     this.email = email || null;
     this.password = password || null;
     this.dateofbirth = dateofbirth || null;
   }
 
   create() {
-    const sql = `INSERT INTO register_user (fullname, email, password, dateofbirth) VALUES (?, ?, ?, ?)`;
+    const sql = `INSERT INTO register_user (fullname,phoneno, email, password, dateofbirth) VALUES (?, ?, ?, ?,?)`;
     return db.execute(sql, [
       this.fullname,
+      this.phoneno,
       this.email,
       this.password,
       this.dateofbirth,
@@ -34,9 +36,10 @@ class REGISTER {
   }
 
   update(userid) {
-    const sql = `UPDATE register_user SET fullname=?, email=?, password=?, dateofbirth=? WHERE userid=?`;
+    const sql = `UPDATE register_user SET fullname=?,phoneno=?, email=?, password=?, dateofbirth=? WHERE userid=?`;
     return db.execute(sql, [
       this.fullname,
+      this.phoneno,
       this.email,
       this.password,
       this.dateofbirth,

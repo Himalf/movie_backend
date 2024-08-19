@@ -17,7 +17,8 @@ exports.registerValidations = [
 ];
 
 exports.register = async (req, res) => {
-  const { fullname, email, password, confirmpassword, dateofbirth } = req.body;
+  const { fullname, phoneno, email, password, confirmpassword, dateofbirth } =
+    req.body;
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -35,6 +36,7 @@ exports.register = async (req, res) => {
     let userRegister = new REGISTER(
       null,
       fullname,
+      phoneno,
       email,
       hashedPassword,
       dateofbirth
@@ -105,7 +107,7 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const userid = req.params.userid;
-  const { fullname, email, password, dateofbirth } = req.body;
+  const { fullname, phoneno, email, password, dateofbirth } = req.body;
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -114,6 +116,7 @@ exports.updateUser = async (req, res) => {
     let userUpdate = new REGISTER(
       userid,
       fullname,
+      phoneno,
       email,
       hashedPassword,
       dateofbirth
