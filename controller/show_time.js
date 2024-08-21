@@ -3,6 +3,22 @@ const SHOWTIME = require("../model/show_time");
 exports.createShowtimeController = async (req, res) => {
   try {
     const { movie_id, theater_id, show_date, show_time } = req.body;
+
+    // Check if the showtime already exists
+    const isDuplicate = await SHOWTIME.isShowtimeDuplicate(
+      movie_id,
+      theater_id,
+      show_date,
+      show_time
+    );
+
+    if (isDuplicate) {
+      return res.status(400).json({
+        error: "Showtime already exists for the specified date and time.",
+      });
+    }
+
+    // Create the showtime if no duplicate exists
     const showtimeModel = new SHOWTIME(
       movie_id,
       theater_id,
@@ -19,6 +35,7 @@ exports.createShowtimeController = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 exports.getShowtimesByMovieIdController = async (req, res) => {
   try {
     const { movie_id } = req.params;
@@ -70,6 +87,21 @@ exports.updateShowtimeController = async (req, res) => {
   try {
     const { id } = req.params;
     const { movie_id, theater_id, show_date, show_time } = req.body;
+
+    // Check if the updated showtime already exists
+    const isDuplicate = await SHOWTIME.isShowtimeDuplicate(
+      movie_id,
+      theater_id,
+      show_date,
+      show_time
+    );
+
+    if (isDuplicate) {
+      return res.status(400).json({
+        error: "Showtime already exists for the specified date and time.",
+      });
+    }
+
     const showtimeModel = new SHOWTIME(
       movie_id,
       theater_id,
@@ -125,6 +157,7 @@ exports.getShowtimesByTheaterMovieAndDateController = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 // Separate function to delete expired showtimes
 const deleteExpiredShowtimes = async () => {
   try {

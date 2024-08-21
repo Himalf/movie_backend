@@ -8,7 +8,38 @@ class SHOWTIME {
     this.show_time = show_time;
   }
 
+  static async isShowtimeDuplicate(movie_id, theater_id, show_date, show_time) {
+    let query = `
+      SELECT COUNT(*) as count 
+      FROM showtimes 
+      WHERE movie_id = ? 
+        AND theater_id = ? 
+        AND show_date = ? 
+        AND show_time = ?`;
+
+    const [result] = await db.execute(query, [
+      movie_id,
+      theater_id,
+      show_date,
+      show_time,
+    ]);
+    return result[0].count > 0;
+  }
+
   async create() {
+    // Check for duplicate showtime before creating
+    const isDuplicate = await SHOWTIME.isShowtimeDuplicate(
+      this.movie_id,
+      this.theater_id,
+      this.show_date,
+      this.show_time
+    );
+    if (isDuplicate) {
+      throw new Error(
+        "Showtime already exists for the same movie, theater, date, and time."
+      );
+    }
+
     let sql = `INSERT INTO showtimes (movie_id, theater_id, show_date, show_time) VALUES (?, ?, ?, ?)`;
 
     const [result] = await db.execute(sql, [
