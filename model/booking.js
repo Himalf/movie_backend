@@ -51,6 +51,7 @@ class BOOKING {
       JOIN showtimes ON bookings.showtime_id = showtimes.showtimeid
       JOIN seats ON bookings.seat_id = seats.seatid
       JOIN movies ON showtimes.movie_id = movies.movieid
+      JOIN theaters ON showtimes.theater_id = theaters.theaterid
       ORDER BY bookings.bookingid ASC`;
     return db.execute(query);
   }

@@ -35,7 +35,6 @@ router.patch("/:id", upload.single("poster"), updateMovieController);
 
 // Delete a movie
 router.delete("/:id", deleteMovieController);
-
 // Get a movie by ID
 router.get("/:id", getMovieByIdController);
 
