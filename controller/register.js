@@ -94,6 +94,7 @@ exports.getUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
   const userid = req.params.userid;
+  console.log(userid, "userid verification");
   try {
     const [user] = await REGISTER.findById(userid);
     if (user.length === 0) {
