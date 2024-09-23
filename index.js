@@ -4,6 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cron = require("node-cron");
 const SEAT = require("./model/seat");
+const MOVIE = require("./model/movie");
 const { deleteSeatsBeforeCurrentTime } = require("./controller/seat");
 const { deleteExpiredShowtimesController } = require("./controller/show_time");
 
@@ -46,6 +47,7 @@ app.listen(port, () => {
 // Cron jobs - runs every 30 seconds
 cron.schedule("0 */2 * * *", async () => {
   try {
+    await MOVIE.deleteMoviesOlderThan30Days();
     await deleteSeatsBeforeCurrentTime();
     await deleteExpiredShowtimesController();
     console.log("Cron job executed successfully.");
