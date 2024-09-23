@@ -75,7 +75,14 @@ class MOVIE {
     let query = `DELETE FROM movies WHERE movieid = ?`;
     return db.execute(query, [id]);
   }
+  static deleteMoviesOlderThan30Days() {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const formattedDate = thirtyDaysAgo.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
+    let query = `DELETE FROM movies WHERE releasedate < ?`;
+    return db.execute(query, [formattedDate]);
+  }
   static getMovieById(id) {
     let query = `SELECT movies.*, movie_category.categoryname
                      FROM movies
