@@ -36,11 +36,12 @@ exports.createBookingController = async (req, res) => {
           .json({ error: `Seat ${seat_id} is already booked` });
       }
 
-      // Create booking
+      // Create booking with timestamp
       const newBooking = bookingRepository.create({
         user_id: parseInt(user_id),
         showtime_id: parseInt(showtime_id),
         seat_id: parseInt(seat_id),
+        created_at: new Date(),
       });
       await bookingRepository.save(newBooking);
 
@@ -86,13 +87,17 @@ exports.getBookingByIdController = async (req, res) => {
       theater: booking.showtime?.theater || null,
       // Flattened fields for easy access
       user_name: booking.user?.fullname || null,
+      email: booking.user?.email || null, // For admin component
       user_email: booking.user?.email || null,
+      title: booking.showtime?.movie?.title || null, // For admin component
       movie_title: booking.showtime?.movie?.title || null,
+      theater: booking.showtime?.theater?.theater_name || null, // For admin component
       theater_name: booking.showtime?.theater?.theater_name || null,
       theater_location: booking.showtime?.theater?.theater_location || null,
       seat_number: booking.seat?.seat_number || null,
       show_date: booking.showtime?.show_date || null,
       show_time: booking.showtime?.show_time || null,
+      booking_date: booking.created_at || new Date().toISOString(),
     };
     
     return res.status(200).json(transformedBooking);
@@ -129,13 +134,19 @@ exports.getAllBookingsController = async (req, res) => {
       theater: booking.showtime?.theater || null,
       // Flattened fields for easy access
       user_name: booking.user?.fullname || null,
-      user_email: booking.user?.email || null,
-      movie_title: booking.showtime?.movie?.title || null,
-      theater_name: booking.showtime?.theater?.theater_name || null,
+      email: booking.user?.email || null, // For admin component
+      user_email: booking.user?.email || null, // Keep both for compatibility
+      title: booking.showtime?.movie?.title || null, // For admin component
+      movie_title: booking.showtime?.movie?.title || null, // Keep both for compatibility
+      theater: booking.showtime?.theater?.theater_name || null, // For admin component
+      theater_name: booking.showtime?.theater?.theater_name || null, // Keep both for compatibility
       theater_location: booking.showtime?.theater?.theater_location || null,
       seat_number: booking.seat?.seat_number || null,
       show_date: booking.showtime?.show_date || null,
       show_time: booking.showtime?.show_time || null,
+      // Add booking_date (using current timestamp as booking was just created)
+      // If you have a created_at column, use that instead
+      booking_date: new Date().toISOString(), // You may want to add a created_at column to track actual booking time
     }));
     
     return res.status(200).json(transformedBookings);

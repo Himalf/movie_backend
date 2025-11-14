@@ -18,6 +18,11 @@ const Booking = new EntitySchema({
     seat_id: {
       type: "int",
     },
+    created_at: {
+      type: "timestamp",
+      default: () => "CURRENT_TIMESTAMP",
+      nullable: true,
+    },
   },
   relations: {
     user: {
