@@ -89,7 +89,20 @@ exports.getShowtimesByMovieIdController = async (req, res) => {
       where: { movie_id: parseInt(movie_id) },
       relations: ["movie", "theater"],
     });
-    return res.status(200).json(showtimes);
+    
+    // Transform data to include movie and theater info directly
+    const transformedShowtimes = showtimes.map(showtime => ({
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    }));
+    
+    return res.status(200).json(transformedShowtimes);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -104,7 +117,20 @@ exports.getShowtimesByTheaterIdController = async (req, res) => {
       where: { theater_id: parseInt(theater_id) },
       relations: ["movie", "theater"],
     });
-    return res.status(200).json(showtimes);
+    
+    // Transform data to include movie and theater info directly
+    const transformedShowtimes = showtimes.map(showtime => ({
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    }));
+    
+    return res.status(200).json(transformedShowtimes);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -122,7 +148,20 @@ exports.getShowtimesByMovieAndTheaterController = async (req, res) => {
       },
       relations: ["movie", "theater"],
     });
-    return res.status(200).json(showtimes);
+    
+    // Transform data to include movie and theater info directly
+    const transformedShowtimes = showtimes.map(showtime => ({
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    }));
+    
+    return res.status(200).json(transformedShowtimes);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -142,7 +181,20 @@ exports.getShowtimeByIdController = async (req, res) => {
       return res.status(404).json({ error: "Showtime not found" });
     }
 
-    return res.status(200).json(showtime);
+    // Transform data to include movie and theater info directly
+    const transformedShowtime = {
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    };
+
+    // Return as array to match frontend expectations (some components expect response.data[0])
+    return res.status(200).json([transformedShowtime]);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -240,7 +292,20 @@ exports.getAllShowtimesController = async (req, res) => {
         show_time: "DESC",
       },
     });
-    return res.status(200).json(showtimes);
+    
+    // Transform data to include movie and theater info directly
+    const transformedShowtimes = showtimes.map(showtime => ({
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    }));
+    
+    return res.status(200).json(transformedShowtimes);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -259,7 +324,20 @@ exports.getShowtimesByTheaterMovieAndDateController = async (req, res) => {
       },
       relations: ["movie", "theater"],
     });
-    return res.status(200).json(showtimes);
+    
+    // Transform data to include movie and theater info directly
+    const transformedShowtimes = showtimes.map(showtime => ({
+      ...showtime,
+      movie: showtime.movie || null,
+      theater: showtime.theater || null,
+      title: showtime.movie?.title || null, // For ticket page
+      movie_title: showtime.movie?.title || null,
+      duration: showtime.movie?.duration || null, // For ticket page
+      theater_name: showtime.theater?.theater_name || null,
+      theater_location: showtime.theater?.theater_location || null,
+    }));
+    
+    return res.status(200).json(transformedShowtimes);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });

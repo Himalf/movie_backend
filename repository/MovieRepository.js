@@ -8,32 +8,50 @@ class MovieRepository {
   static async getMoviesNowShowing() {
     const repository = this.getRepository();
     const currentDate = new Date().toISOString().split("T")[0];
-    return await repository
+    const movies = await repository
       .createQueryBuilder("movie")
       .leftJoinAndSelect("movie.moviecategory", "category")
       .where("movie.releasedate <= :currentDate", { currentDate })
       .orderBy("movie.releasedate", "ASC")
       .getMany();
+    
+    // Transform data to match frontend expectations
+    return movies.map(movie => ({
+      ...movie,
+      categoryname: movie.moviecategory?.categoryname || null
+    }));
   }
 
   static async getMoviesNextRelease() {
     const repository = this.getRepository();
     const currentDate = new Date().toISOString().split("T")[0];
-    return await repository
+    const movies = await repository
       .createQueryBuilder("movie")
       .leftJoinAndSelect("movie.moviecategory", "category")
       .where("movie.releasedate > :currentDate", { currentDate })
       .orderBy("movie.releasedate", "ASC")
       .getMany();
+    
+    // Transform data to match frontend expectations
+    return movies.map(movie => ({
+      ...movie,
+      categoryname: movie.moviecategory?.categoryname || null
+    }));
   }
 
   static async getAllMovies() {
     const repository = this.getRepository();
-    return await repository
+    const movies = await repository
       .createQueryBuilder("movie")
       .leftJoinAndSelect("movie.moviecategory", "category")
       .orderBy("movie.releasedate", "DESC")
       .getMany();
+    
+    // Transform data to match frontend expectations
+    return movies.map(movie => ({
+      ...movie,
+      categoryname: movie.moviecategory?.categoryname || null
+    }));
   }
 
   static async deleteMoviesOlderThan30Days() {

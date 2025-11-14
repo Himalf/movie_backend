@@ -75,7 +75,27 @@ exports.getBookingByIdController = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ error: "Booking not found" });
     }
-    return res.status(200).json(booking);
+    
+    // Transform data to include all related info directly
+    const transformedBooking = {
+      ...booking,
+      user: booking.user || null,
+      showtime: booking.showtime || null,
+      seat: booking.seat || null,
+      movie: booking.showtime?.movie || null,
+      theater: booking.showtime?.theater || null,
+      // Flattened fields for easy access
+      user_name: booking.user?.fullname || null,
+      user_email: booking.user?.email || null,
+      movie_title: booking.showtime?.movie?.title || null,
+      theater_name: booking.showtime?.theater?.theater_name || null,
+      theater_location: booking.showtime?.theater?.theater_location || null,
+      seat_number: booking.seat?.seat_number || null,
+      show_date: booking.showtime?.show_date || null,
+      show_time: booking.showtime?.show_time || null,
+    };
+    
+    return res.status(200).json(transformedBooking);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -98,7 +118,27 @@ exports.getAllBookingsController = async (req, res) => {
         bookingid: "ASC",
       },
     });
-    return res.status(200).json(bookings);
+    
+    // Transform data to include all related info directly
+    const transformedBookings = bookings.map(booking => ({
+      ...booking,
+      user: booking.user || null,
+      showtime: booking.showtime || null,
+      seat: booking.seat || null,
+      movie: booking.showtime?.movie || null,
+      theater: booking.showtime?.theater || null,
+      // Flattened fields for easy access
+      user_name: booking.user?.fullname || null,
+      user_email: booking.user?.email || null,
+      movie_title: booking.showtime?.movie?.title || null,
+      theater_name: booking.showtime?.theater?.theater_name || null,
+      theater_location: booking.showtime?.theater?.theater_location || null,
+      seat_number: booking.seat?.seat_number || null,
+      show_date: booking.showtime?.show_date || null,
+      show_time: booking.showtime?.show_time || null,
+    }));
+    
+    return res.status(200).json(transformedBookings);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -110,29 +150,37 @@ exports.getBookingsByUserIdController = async (req, res) => {
   try {
     const { user_id } = req.params;
     const bookingRepository = AppDataSource.getRepository("Booking");
-    const bookings = await bookingRepository
-      .createQueryBuilder("booking")
-      .leftJoinAndSelect("booking.showtime", "showtime")
-      .leftJoinAndSelect("booking.seat", "seat")
-      .leftJoinAndSelect("showtime.movie", "movie")
-      .select([
-        "booking.bookingid",
-        "showtime.show_time",
-        "showtime.show_date",
-        "seat.seat_number",
-        "movie.title",
-      ])
-      .where("booking.user_id = :user_id", { user_id: parseInt(user_id) })
-      .orderBy("booking.bookingid", "ASC")
-      .getMany();
+    const bookings = await bookingRepository.find({
+      where: { user_id: parseInt(user_id) },
+      relations: [
+        "user",
+        "showtime",
+        "showtime.movie",
+        "showtime.theater",
+        "seat",
+      ],
+      order: {
+        bookingid: "ASC",
+      },
+    });
 
-    // Transform to match expected format
+    // Transform to match expected format with all related data
     const transformedBookings = bookings.map((booking) => ({
       bookingid: booking.bookingid,
-      show_time: booking.showtime.show_time,
-      show_date: booking.showtime.show_date,
-      seat_number: booking.seat.seat_number,
-      movie_title: booking.showtime.movie.title,
+      show_time: booking.showtime?.show_time || null,
+      show_date: booking.showtime?.show_date || null,
+      seat_number: booking.seat?.seat_number || null,
+      movie_title: booking.showtime?.movie?.title || null,
+      // Include full objects for flexibility
+      user: booking.user || null,
+      showtime: booking.showtime || null,
+      seat: booking.seat || null,
+      movie: booking.showtime?.movie || null,
+      theater: booking.showtime?.theater || null,
+      // Additional flattened fields
+      user_name: booking.user?.fullname || null,
+      theater_name: booking.showtime?.theater?.theater_name || null,
+      theater_location: booking.showtime?.theater?.theater_location || null,
     }));
 
     return res.status(200).json(transformedBookings);

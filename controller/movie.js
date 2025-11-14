@@ -119,7 +119,14 @@ exports.getMovieByIdController = async (req, res) => {
       return res.status(404).json({ error: "Movie not found" });
     }
 
-    return res.status(200).json(movie);
+    // Transform data to match frontend expectations
+    const transformedMovie = {
+      ...movie,
+      categoryname: movie.moviecategory?.categoryname || null
+    };
+
+    // Return as array to match frontend expectations (response.data[0])
+    return res.status(200).json([transformedMovie]);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
