@@ -1,14 +1,18 @@
-const THEATER = require("../model/theater");
+const AppDataSource = require("../config/data-source");
 
 exports.createTheaterController = async (req, res) => {
   try {
     const { theater_name, theater_location } = req.body;
 
-    const theater = new THEATER(theater_name, theater_location);
-    const result = await theater.create();
+    const theaterRepository = AppDataSource.getRepository("Theater");
+    const newTheater = theaterRepository.create({
+      theater_name,
+      theater_location,
+    });
+    const savedTheater = await theaterRepository.save(newTheater);
 
     return res.status(201).json({
-      result,
+      result: savedTheater,
       msg: "Theater created successfully",
     });
   } catch (error) {
@@ -22,15 +26,20 @@ exports.updateTheaterController = async (req, res) => {
     const { id } = req.params;
     const { theater_name, theater_location } = req.body;
 
-    const theater = new THEATER(theater_name, theater_location);
-    const result = await theater.update(id);
+    const theaterRepository = AppDataSource.getRepository("Theater");
+    const theater = await theaterRepository.findOne({
+      where: { theaterid: parseInt(id) },
+    });
 
-    if (result.affectedRows === 0) {
+    if (!theater) {
       return res.status(404).json({ error: "Theater not found" });
     }
 
+    theaterRepository.merge(theater, { theater_name, theater_location });
+    const updatedTheater = await theaterRepository.save(theater);
+
     return res.status(200).json({
-      result,
+      result: updatedTheater,
       msg: "Theater updated successfully",
     });
   } catch (error) {
@@ -42,14 +51,17 @@ exports.updateTheaterController = async (req, res) => {
 exports.deleteTheaterController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await THEATER.delete(id);
+    const theaterRepository = AppDataSource.getRepository("Theater");
+    const theater = await theaterRepository.findOne({
+      where: { theaterid: parseInt(id) },
+    });
 
-    if (result.affectedRows === 0) {
+    if (!theater) {
       return res.status(404).json({ error: "Theater not found" });
     }
 
+    await theaterRepository.remove(theater);
     return res.status(200).json({
-      result,
       msg: "Theater deleted successfully",
     });
   } catch (error) {
@@ -60,8 +72,9 @@ exports.deleteTheaterController = async (req, res) => {
 
 exports.getAllTheatersController = async (req, res) => {
   try {
-    const result = await THEATER.getAll();
-    return res.status(200).json(result[0]);
+    const theaterRepository = AppDataSource.getRepository("Theater");
+    const theaters = await theaterRepository.find();
+    return res.status(200).json(theaters);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -71,13 +84,16 @@ exports.getAllTheatersController = async (req, res) => {
 exports.getTheaterByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await THEATER.getById(id);
+    const theaterRepository = AppDataSource.getRepository("Theater");
+    const theater = await theaterRepository.findOne({
+      where: { theaterid: parseInt(id) },
+    });
 
-    if (result[0].length === 0) {
+    if (!theater) {
       return res.status(404).json({ error: "Theater not found" });
     }
 
-    return res.status(200).json(result[0]);
+    return res.status(200).json(theater);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });

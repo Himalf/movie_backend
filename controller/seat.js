@@ -1,35 +1,7 @@
-const SEAT = require("../model/seat");
+const AppDataSource = require("../config/data-source");
 
-exports.createSeatController = async (req, res) => {
-  try {
-    const { status, showtime_id } = req.body;
-
-    if (!status || !showtime_id) {
-      return res
-        .status(400)
-        .json({ error: "Status, showtime_id,  are required" });
-    }
-
-    // Generate seat numbers based on theater_id
-    const seatNumbers = generateSeatNumbers(showtime_id);
-
-    // Insert each seat into the database
-    const insertPromises = seatNumbers.map((seat_number) =>
-      new SEAT(seat_number, status, showtime_id).create()
-    );
-
-    await Promise.all(insertPromises);
-
-    return res.status(200).json({ msg: "Seats added successfully" });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-// Helper function to generate seat numbers based on theater_id
-function generateSeatNumbers(showtime_id) {
-  // Example: Generate seat numbers in a grid format
+// Helper function to generate seat numbers
+function generateSeatNumbers() {
   const rows = 10; // Number of rows
   const seatsPerRow = 10; // Number of seats per row
   const seatNumbers = [];
@@ -43,11 +15,48 @@ function generateSeatNumbers(showtime_id) {
   return seatNumbers;
 }
 
+exports.createSeatController = async (req, res) => {
+  try {
+    const { status, showtime_id } = req.body;
+
+    if (!status || !showtime_id) {
+      return res
+        .status(400)
+        .json({ error: "Status and showtime_id are required" });
+    }
+
+    // Generate seat numbers
+    const seatNumbers = generateSeatNumbers();
+
+    // Insert each seat into the database
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const insertPromises = seatNumbers.map((seat_number) => {
+      const newSeat = seatRepository.create({
+        seat_number,
+        status,
+        showtime_id: parseInt(showtime_id),
+      });
+      return seatRepository.save(newSeat);
+    });
+
+    await Promise.all(insertPromises);
+
+    return res.status(200).json({ msg: "Seats added successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 exports.getSeatsByShowtimeController = async (req, res) => {
   try {
     const { showtime_id } = req.params;
-    const seats = await SEAT.getSeatsByShowtime(showtime_id);
-    return res.status(200).json(seats[0]);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seats = await seatRepository.find({
+      where: { showtime_id: parseInt(showtime_id) },
+      relations: ["showtime", "showtime.theater", "showtime.movie"],
+    });
+    return res.status(200).json(seats);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -57,8 +66,20 @@ exports.getSeatsByShowtimeController = async (req, res) => {
 exports.getSeatsByMovieAndShowtimeController = async (req, res) => {
   try {
     const { movie_id, showtime_id } = req.params;
-    const seats = await SEAT.getSeatsByMovieAndShowtime(movie_id, showtime_id);
-    return res.status(200).json(seats[0]);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seats = await seatRepository
+      .createQueryBuilder("seat")
+      .leftJoinAndSelect("seat.showtime", "showtime")
+      .leftJoinAndSelect("showtime.theater", "theater")
+      .leftJoinAndSelect("showtime.movie", "movie")
+      .where("seat.showtime_id = :showtime_id", {
+        showtime_id: parseInt(showtime_id),
+      })
+      .andWhere("showtime.movie_id = :movie_id", {
+        movie_id: parseInt(movie_id),
+      })
+      .getMany();
+    return res.status(200).json(seats);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -68,8 +89,16 @@ exports.getSeatsByMovieAndShowtimeController = async (req, res) => {
 exports.getSeatsByDateAndTimeController = async (req, res) => {
   try {
     const { show_date, show_time } = req.params;
-    const seats = await SEAT.getSeatsByDateAndTime(show_date, show_time);
-    return res.status(200).json(seats[0]);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seats = await seatRepository
+      .createQueryBuilder("seat")
+      .leftJoinAndSelect("seat.showtime", "showtime")
+      .leftJoinAndSelect("showtime.theater", "theater")
+      .leftJoinAndSelect("showtime.movie", "movie")
+      .where("showtime.show_date = :show_date", { show_date })
+      .andWhere("showtime.show_time = :show_time", { show_time })
+      .getMany();
+    return res.status(200).json(seats);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -80,9 +109,19 @@ exports.updateSeatStatusController = async (req, res) => {
   try {
     const { seatid } = req.params;
     const { status } = req.body;
-    const updateRecord = await SEAT.updateSeatStatus(seatid, status);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seat = await seatRepository.findOne({
+      where: { seatid: parseInt(seatid) },
+    });
+
+    if (!seat) {
+      return res.status(404).json({ error: "Seat not found" });
+    }
+
+    seatRepository.merge(seat, { status });
+    const updatedSeat = await seatRepository.save(seat);
     return res.status(200).json({
-      updateRecord,
+      updateRecord: updatedSeat,
       msg: "Seat status updated successfully",
     });
   } catch (error) {
@@ -94,9 +133,17 @@ exports.updateSeatStatusController = async (req, res) => {
 exports.deleteSeatController = async (req, res) => {
   try {
     const { seatid } = req.params;
-    const deleteRecord = await SEAT.deleteSeat(seatid);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seat = await seatRepository.findOne({
+      where: { seatid: parseInt(seatid) },
+    });
+
+    if (!seat) {
+      return res.status(404).json({ error: "Seat not found" });
+    }
+
+    await seatRepository.remove(seat);
     return res.status(200).json({
-      deleteRecord,
       msg: "Seat deleted successfully",
     });
   } catch (error) {
@@ -108,8 +155,17 @@ exports.deleteSeatController = async (req, res) => {
 exports.getSeatByIdController = async (req, res) => {
   try {
     const { seatid } = req.params;
-    const seat = await SEAT.getSeatById(seatid);
-    return res.status(200).json(seat[0]);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seat = await seatRepository.findOne({
+      where: { seatid: parseInt(seatid) },
+      relations: ["showtime", "showtime.theater", "showtime.movie"],
+    });
+
+    if (!seat) {
+      return res.status(404).json({ error: "Seat not found" });
+    }
+
+    return res.status(200).json(seat);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -118,8 +174,14 @@ exports.getSeatByIdController = async (req, res) => {
 
 exports.getAllSeatsController = async (req, res) => {
   try {
-    const seats = await SEAT.getAllSeats();
-    return res.status(200).json(seats[0]);
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const seats = await seatRepository.find({
+      relations: ["showtime", "showtime.theater", "showtime.movie"],
+      order: {
+        seat_number: "ASC",
+      },
+    });
+    return res.status(200).json(seats);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -129,7 +191,32 @@ exports.getAllSeatsController = async (req, res) => {
 // Automatically delete seats where the showtime is before the current date and time
 exports.deleteSeatsBeforeCurrentTime = async () => {
   try {
-    await SEAT.deleteSeatsBeforeCurrentTime();
+    const seatRepository = AppDataSource.getRepository("Seat");
+    const showtimeRepository = AppDataSource.getRepository("ShowTime");
+    const currentDateTime = new Date();
+    const currentDate = currentDateTime.toISOString().split("T")[0];
+    const currentTime = currentDateTime.toTimeString().split(" ")[0];
+
+    // First, find expired showtimes
+    const expiredShowtimes = await showtimeRepository
+      .createQueryBuilder("showtime")
+      .where("showtime.show_date < :currentDate", { currentDate })
+      .orWhere(
+        "(showtime.show_date = :currentDate AND showtime.show_time < :currentTime)",
+        { currentDate, currentTime }
+      )
+      .getMany();
+
+    if (expiredShowtimes.length > 0) {
+      const expiredShowtimeIds = expiredShowtimes.map((st) => st.showtimeid);
+      await seatRepository
+        .createQueryBuilder()
+        .delete()
+        .from("Seat")
+        .where("showtime_id IN (:...ids)", { ids: expiredShowtimeIds })
+        .execute();
+    }
+
     console.log("Expired seats deleted successfully.");
   } catch (error) {
     console.log("Error deleting expired seats:", error);

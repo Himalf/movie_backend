@@ -3,13 +3,22 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cron = require("node-cron");
-const SEAT = require("./model/seat");
-const MOVIE = require("./model/movie");
+const AppDataSource = require("./config/data-source");
 const { deleteSeatsBeforeCurrentTime } = require("./controller/seat");
-const { deleteExpiredShowtimesController } = require("./controller/show_time");
+const { deleteExpiredShowtimes } = require("./controller/show_time");
+const MovieRepository = require("./repository/MovieRepository");
 
 const app = express();
 const port = process.env.PORT_NEW || 3000; // Default port for development
+
+// Initialize TypeORM
+AppDataSource.initialize()
+  .then(() => {
+    console.log("TypeORM Data Source has been initialized!");
+  })
+  .catch((err) => {
+    console.error("Error during TypeORM Data Source initialization:", err);
+  });
 
 // Middleware
 app.use(bodyParser.json());
@@ -44,12 +53,12 @@ app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
 });
 
-// Cron jobs - runs every 30 seconds
+// Cron jobs - runs every 2 hours
 cron.schedule("0 */2 * * *", async () => {
   try {
-    await MOVIE.deleteMoviesOlderThan30Days();
+    await MovieRepository.deleteMoviesOlderThan30Days();
     await deleteSeatsBeforeCurrentTime();
-    await deleteExpiredShowtimesController();
+    await deleteExpiredShowtimes();
     console.log("Cron job executed successfully.");
   } catch (error) {
     console.error("Error executing cron job:", error);

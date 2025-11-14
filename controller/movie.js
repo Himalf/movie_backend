@@ -1,4 +1,5 @@
-const MOVIE = require("../model/movie");
+const AppDataSource = require("../config/data-source");
+const MovieRepository = require("../repository/MovieRepository");
 
 exports.createMovieController = async (req, res) => {
   try {
@@ -6,17 +7,19 @@ exports.createMovieController = async (req, res) => {
       req.body;
     const poster = req.file ? req.file.filename : null;
 
-    const movieModel = new MOVIE(
+    const movieRepository = AppDataSource.getRepository("Movie");
+    const newMovie = movieRepository.create({
       title,
       description,
       releasedate,
       duration,
       moviecategoryid,
-      poster
-    );
-    const createRecord = await movieModel.create();
+      poster,
+    });
+
+    const savedMovie = await movieRepository.save(newMovie);
     return res.status(200).json({
-      createRecord,
+      createRecord: savedMovie,
       msg: "Movie created successfully",
     });
   } catch (error) {
@@ -27,8 +30,8 @@ exports.createMovieController = async (req, res) => {
 
 exports.getNowShowingMoviesController = async (req, res) => {
   try {
-    const nowShowingMovies = await MOVIE.getMoviesNowShowing();
-    return res.status(200).json(nowShowingMovies[0]);
+    const movies = await MovieRepository.getMoviesNowShowing();
+    return res.status(200).json(movies);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -37,8 +40,8 @@ exports.getNowShowingMoviesController = async (req, res) => {
 
 exports.getNextReleaseMoviesController = async (req, res) => {
   try {
-    const nextReleaseMovies = await MOVIE.getMoviesNextRelease();
-    return res.status(200).json(nextReleaseMovies[0]);
+    const movies = await MovieRepository.getMoviesNextRelease();
+    return res.status(200).json(movies);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -52,17 +55,27 @@ exports.updateMovieController = async (req, res) => {
       req.body;
     const poster = req.file ? req.file.filename : null;
 
-    const movieModel = new MOVIE(
+    const movieRepository = AppDataSource.getRepository("Movie");
+    const movie = await movieRepository.findOne({
+      where: { movieid: parseInt(id) },
+    });
+
+    if (!movie) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    movieRepository.merge(movie, {
       title,
       description,
       releasedate,
       duration,
       moviecategoryid,
-      poster
-    );
-    const updateRecord = await movieModel.updateMovie(id);
+      poster: poster || movie.poster,
+    });
+
+    const updatedMovie = await movieRepository.save(movie);
     return res.status(200).json({
-      updateRecord,
+      updateRecord: updatedMovie,
       msg: "Movie updated successfully",
     });
   } catch (error) {
@@ -74,9 +87,17 @@ exports.updateMovieController = async (req, res) => {
 exports.deleteMovieController = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleteRecord = await MOVIE.deleteMovie(id);
+    const movieRepository = AppDataSource.getRepository("Movie");
+    const movie = await movieRepository.findOne({
+      where: { movieid: parseInt(id) },
+    });
+
+    if (!movie) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    await movieRepository.remove(movie);
     return res.status(200).json({
-      deleteRecord,
       msg: "Movie deleted successfully",
     });
   } catch (error) {
@@ -88,8 +109,17 @@ exports.deleteMovieController = async (req, res) => {
 exports.getMovieByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const movie = await MOVIE.getMovieById(id);
-    return res.status(200).json(movie[0]);
+    const movieRepository = AppDataSource.getRepository("Movie");
+    const movie = await movieRepository.findOne({
+      where: { movieid: parseInt(id) },
+      relations: ["moviecategory"],
+    });
+
+    if (!movie) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    return res.status(200).json(movie);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });

@@ -1,4 +1,4 @@
-const REGISTER = require("../model/register");
+const AppDataSource = require("../config/data-source");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
@@ -30,23 +30,33 @@ exports.register = async (req, res) => {
   }
 
   try {
+    const registerRepository = AppDataSource.getRepository("Register");
+
+    // Check if user already exists
+    const existingUser = await registerRepository.findOne({
+      where: { email },
+    });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    let userRegister = new REGISTER(
-      null,
+    const newUser = registerRepository.create({
       fullname,
       phoneno,
       email,
-      hashedPassword,
-      dateofbirth
-    );
-    let reg = await userRegister.create();
+      password: hashedPassword,
+      dateofbirth,
+    });
+
+    const savedUser = await registerRepository.save(newUser);
 
     res.status(201).json({
       err: false,
       msg: "User created successfully",
-      user: reg,
+      user: savedUser,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -62,21 +72,25 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const [user] = await REGISTER.findByEmail(email);
-    if (user.length === 0) {
+    const registerRepository = AppDataSource.getRepository("Register");
+    const user = await registerRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const matched = await bcrypt.compare(password, user[0].password);
+    const matched = await bcrypt.compare(password, user.password);
     if (!matched) {
       return res.status(401).json({ error: "Invalid password" });
     }
 
-    const token = generateAccessToken(user[0].email);
+    const token = generateAccessToken(user.email);
     res.status(200).json({
       msg: "Logged in successfully",
       token,
-      user: user[0],
+      user: user,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -85,7 +99,8 @@ exports.login = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
   try {
-    const [users] = await REGISTER.findAll();
+    const registerRepository = AppDataSource.getRepository("Register");
+    const users = await registerRepository.find();
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -96,11 +111,15 @@ exports.getUserById = async (req, res) => {
   const userid = req.params.userid;
   console.log(userid, "userid verification");
   try {
-    const [user] = await REGISTER.findById(userid);
-    if (user.length === 0) {
+    const registerRepository = AppDataSource.getRepository("Register");
+    const user = await registerRepository.findOne({
+      where: { userid: parseInt(userid) },
+    });
+
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json(user[0]);
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -111,18 +130,27 @@ exports.updateUser = async (req, res) => {
   const { fullname, phoneno, email, password, dateofbirth } = req.body;
 
   try {
+    const registerRepository = AppDataSource.getRepository("Register");
+    const user = await registerRepository.findOne({
+      where: { userid: parseInt(userid) },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    let userUpdate = new REGISTER(
-      userid,
+    registerRepository.merge(user, {
       fullname,
       phoneno,
       email,
-      hashedPassword,
-      dateofbirth
-    );
-    await userUpdate.update(userid);
+      password: hashedPassword,
+      dateofbirth,
+    });
+
+    await registerRepository.save(user);
 
     res.status(200).json({
       err: false,
@@ -136,12 +164,16 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const userid = req.params.userid;
   try {
-    const [user] = await REGISTER.findById(userid);
-    if (user.length === 0) {
+    const registerRepository = AppDataSource.getRepository("Register");
+    const user = await registerRepository.findOne({
+      where: { userid: parseInt(userid) },
+    });
+
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    await REGISTER.deleteUser(userid);
+    await registerRepository.remove(user);
     res.status(200).json({
       err: false,
       msg: "User deleted successfully",
@@ -152,7 +184,7 @@ exports.deleteUser = async (req, res) => {
 };
 
 exports.verifyToken = (req, res, next) => {
-  const token = req.header("Authorization").replace("Bearer ", "");
+  const token = req.header("Authorization")?.replace("Bearer ", "");
   if (!token) {
     return res.status(401).json({ error: "Access denied, no token provided" });
   }
